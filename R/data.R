@@ -5,7 +5,7 @@ summarizeCSV <- function(filename) {
   
   df <- read.csv(filename, skip=skiplines)
   
-  df <- expandTrialNumbers(df)
+  df <- fillInNumericColumns(df, c(1,2))
   
   # select relevant rows
   
@@ -19,13 +19,13 @@ summarizeCSV <- function(filename) {
   # select only samples that have any of the events:
   df <- df[which(df$Event.name %in% events),]
   
-  
-  
+
   # select relevant columns:
   
   # let's say we want these columns
   # (might add some more later on)
   columns <- c( "Trial..",
+                "TP.Row",
                 "Event.name",
                 "Frame.time..s.",
                 "Right..Hand.position.X",
@@ -37,9 +37,9 @@ summarizeCSV <- function(filename) {
   df <- df[, columns]
   
   # we give these columns easier names to work with:
-  names(df) <- c('trial_no', 'event_id', 'frametime_s', 'rightX_m', 'rightY_m', 'leftX_m', 'leftY_m')
+  names(df) <- c('trial_no', 'trial_protocol', 'event_id', 'frametime_s', 'rightX_m', 'rightY_m', 'leftX_m', 'leftY_m')
   
-  # and we convert them to numeric type:
+  # and we convert the remaining character columns to numeric type:
   for (colname in c('frametime_s', 'rightX_m', 'rightY_m', 'leftX_m', 'leftY_m')) {
     colidx <- which(names(df) == colname)
     df[,colidx] <- as.numeric(df[,colidx])
@@ -103,35 +103,39 @@ getLinesToSkip <- function(filename) {
   
 }
 
-expandTrialNumbers <- function(df) {
+fillInNumericColumns <- function(df, column_nos) {
   
-  # it should start at trial 1,
-  # but just in case we set it to 0
-  current_trial <- 0
+  # things should start right away...
+  # but just in case we set it to NA (NOT APPLICABLE or something... an unknown value)
+  current_values <- rep(NA, length(column_nos))
   
-  # we take just the relevant column to work with:
-  trialcol <- df$Trial..
+  # we take just the relevant columns to work with:
+  trialcols <- df[,column_nos]
   
-  # we create a new vector to store continuous trial numbers:
-  newtrialcol <- vector(mode='integer', length=length(trialcol))
+  # we create a new data frame to store continuous numberic values:
+  newtrialcols <- data.frame(  matrix(NA, nrow=dim(df)[1], ncol=length(column_nos) ) )
   
-  # we loop through the trial column entries:
-  for (entry in c(1:length(trialcol))) {
+  # we loop through the rows of the data frame:
+  for (entry in c(1:dim(df)[1])) {
     # if the entry has more than 0 characters, we check it out:
-    if (nchar(trialcol[entry]) > 0) {
-      # converting to numeric type should give NA (and a warning) if the string
-      # contains something that ca not be converted to a numeric type:
-      if (suppressWarnings(!is.na(as.numeric(trialcol[entry])))) {
-        # if we do not get NA, we use this as the current trial number:
-        current_trial <- as.numeric(trialcol[entry])
+    for (cn in c(1:length(column_nos))) {
+      if (nchar(trialcols[entry,cn]) > 0) {
+        # converting to numeric type should give NA (and a warning) if the string
+        # contains something that ca not be converted to a numeric type:
+        if (suppressWarnings(!is.na(as.numeric(trialcols[entry,cn])))) {
+          # if we do not get NA, we use this as the current value:
+          current_values[cn] <- as.numeric(trialcols[entry,cn])
+        }
       }
     }
-    # we store the current trial number in the new vector:
-    newtrialcol[entry] <- current_trial
+    # we store the current numeric values in the new columns:
+    newtrialcols[entry,] <- current_values
   }
   
   # and replace the trial# column with the new vector:
-  df$Trial.. <- newtrialcol
+  for (cn in c(1:length(column_nos))) {
+    df[,column_nos[cn]] <- newtrialcols[cn]
+  }
   
   # and return the full data frame:
   return(df)

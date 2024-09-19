@@ -54,7 +54,7 @@ participantBlockOrder <- function(N=100) {
       entry <- conditions[order[runno]]
       if (motion[runno] == 1) {
         # add M if people are supposed to move/follow the robot instead of wait
-        entry <- sprintf('%sM',entry)
+        # entry <- sprintf('%sM',entry)
       }
       runs[[sprintf('run%d',runno)]] <- c(runs[[sprintf('run%d',runno)]], entry)
     }
@@ -68,6 +68,6 @@ participantBlockOrder <- function(N=100) {
   }
   
   # write to a file:
-  write.csv(df,'participant_block_order.csv', quote=TRUE, row.names=FALSE)
-  # return(df)
+  # write.csv(df,'participant_block_order.csv', quote=TRUE, row.names=FALSE)
+  return(df)
 }

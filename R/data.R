@@ -1,3 +1,7 @@
+library(tools)  # to get file name without extension
+
+
+# convert files -----
 
 summarizeCSV <- function(filename) {
   
@@ -139,5 +143,117 @@ fillInNumericColumns <- function(df, column_nos) {
   
   # and return the full data frame:
   return(df)
+  
+}
+
+
+# find / convert / organize participants -----
+
+# first we need to identify participants
+# the data comes organized in 2 folders
+# one for left-handers and one for right-handers
+#
+# we need to specify the folder for left-handers,
+# and the folder for right-handers
+#
+# there are no subfolders
+#
+# the data for each participant comes in 12 files
+# with way too much data in it
+# we will find all files and convert them to simpler forms
+
+
+# findParticipants(folders = c( 'left' = '../APM/Left-Handers', 'right' = '../APM/Right-Handers'))
+
+findParticipants <- function(folders) {
+  
+  participants <- list()
+  
+  for (group in c('left','right')) {
+    
+    folder <- folders[group]
+    group_participants <- c()
+    
+    # list files in the folder:
+    files <- list.files( path = folder,
+                         pattern = '*.csv' )
+    
+    # loop through all the files:
+    for (filename in files) {
+      
+      # unnecessary check that the filename starts with 'APM_'
+      if (substr(filename, 1, 4) == 'APM_') {
+        
+        # extract the ID
+        thisID <- substr(filename, 5, 10)
+        # add the ID to a list of IDs in this group:
+        group_participants <- c(group_participants, thisID)
+      }
+
+    }
+    
+    # sort IDs by group and only keep unique IDs
+    participants[[group]] <- unique(group_participants)
+    
+  }
+  
+  return(participants)
+  
+}
+
+
+convertAllParticipantsData <- function(folders, participants) {
+  
+  for (group in c('left','right')) {
+    
+    src_folder = folders[group]
+    IDs = participants[[group]]
+    
+    dir.create(file.path('data', group))
+    
+    for (ID in IDs) {
+      
+      dir.create(file.path('data', group, ID))
+      
+      participantFiles <- list.files( path = file.path( folders[group] ),
+                                      pattern = sprintf('APM_%s*', ID))
+      
+      if (length(participantFiles) != 12) {
+        cat(sprintf('WARNING: not 12 files for participant: %s in %s-handers\n', ID, group))
+      }
+      
+      for (pfile in participantFiles) {
+        
+        # strip the last 8 chars of the filename (without extention)
+        outfile <- file.path( 'data',
+                              group,
+                              sprintf( '%s.csv',  c( substr(pfile, 1, 15)))
+        )
+        
+        cat(sprintf('working on: %s\n',outfile))
+        
+        df <- summarizeCSV( filename = file.path( folders[group], pfile ) )
+        
+        write.csv( df, 
+                   file = outfile,
+                   row.names = FALSE )
+        
+      }
+    }
+    
+    
+  }
+  
+  # no output returned:
+  # files should be in their respective folders
+  
+}
+
+convertData <- function(folders) {
+  
+  
+  participants <- findParticipants(folders)
+  
+  convertAllParticipantsData(folders, participants)
   
 }

@@ -9,10 +9,7 @@ summarizeCSV <- function(filename) {
   
   df <- read.csv(filename, skip=skiplines)
   
-  df <- fillInNumericColumns(df, c(1,2))
-  
   # select relevant rows
-  
   # we want to go with all events for now:
   events <- c("STAY_CENTRE",
               "TARGET_ON",
@@ -23,6 +20,8 @@ summarizeCSV <- function(filename) {
   # select only samples that have any of the events:
   df <- df[which(df$Event.name %in% events),]
   
+  # make sure these variables are numeric:
+  df <- fillInNumericColumns(df, c(1,2))
 
   # select relevant columns:
   
@@ -227,18 +226,27 @@ convertAllParticipantsData <- function(folders, participants) {
         # strip the last 8 chars of the filename (without extention)
         outfile <- file.path( 'data',
                               group,
+                              ID,
                               sprintf( '%s.csv',  c( substr(pfile, 1, 15)))
         )
         
-        cat(sprintf('working on: %s\n',outfile))
-        
-        df <- summarizeCSV( filename = file.path( folders[group], pfile ) )
-        
-        write.csv( df, 
-                   file = outfile,
-                   row.names = FALSE )
+        if (file.exists(outfile)) {
+          
+          cat(sprintf('skip existing: %s\n',outfile))
+          
+        } else {
+          
+          cat(sprintf('working on: %s\n',outfile))
+          
+          df <- summarizeCSV( filename = file.path( folders[group], pfile ) )
+          
+          write.csv( df, 
+                     file = outfile,
+                     row.names = FALSE )
+        }
         
       }
+      
     }
     
     

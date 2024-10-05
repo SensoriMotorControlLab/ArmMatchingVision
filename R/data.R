@@ -115,29 +115,36 @@ fillInNumericColumns <- function(df, column_nos) {
   # we take just the relevant columns to work with:
   trialcols <- df[,column_nos]
   
-  # we create a new data frame to store continuous numberic values:
-  newtrialcols <- data.frame(  matrix(NA, nrow=dim(df)[1], ncol=length(column_nos) ) )
+  # # we create a new data frame to store continuous numeric values:
+  # newtrialcols <- data.frame(  matrix(NA, nrow=dim(df)[1], ncol=length(column_nos) ) )
+  # 
+  # # old (potentially very slow) way:
+  # 
+  # # we loop through the rows of the data frame:
+  # for (entry in c(1:dim(df)[1])) {
+  #   # if the entry has more than 0 characters, we check it out:
+  #   for (cn in c(1:length(column_nos))) {
+  #     if (nchar(trialcols[entry,cn]) > 0) {
+  #       # converting to numeric type should give NA (and a warning) if the string
+  #       # contains something that ca not be converted to a numeric type:
+  #       if (suppressWarnings(!is.na(as.numeric(trialcols[entry,cn])))) {
+  #         # if we do not get NA, we use this as the current value:
+  #         current_values[cn] <- as.numeric(trialcols[entry,cn])
+  #       }
+  #     }
+  #   }
+  #   # we store the current numeric values in the new columns:
+  #   newtrialcols[entry,] <- current_values
+  # }
+  # 
+  # # and replace the trial# column with the new vector:
+  # for (cn in c(1:length(column_nos))) {
+  #   df[,column_nos[cn]] <- newtrialcols[cn]
+  # }
   
-  # we loop through the rows of the data frame:
-  for (entry in c(1:dim(df)[1])) {
-    # if the entry has more than 0 characters, we check it out:
-    for (cn in c(1:length(column_nos))) {
-      if (nchar(trialcols[entry,cn]) > 0) {
-        # converting to numeric type should give NA (and a warning) if the string
-        # contains something that ca not be converted to a numeric type:
-        if (suppressWarnings(!is.na(as.numeric(trialcols[entry,cn])))) {
-          # if we do not get NA, we use this as the current value:
-          current_values[cn] <- as.numeric(trialcols[entry,cn])
-        }
-      }
-    }
-    # we store the current numeric values in the new columns:
-    newtrialcols[entry,] <- current_values
-  }
-  
-  # and replace the trial# column with the new vector:
+  # trying out something else:
   for (cn in c(1:length(column_nos))) {
-    df[,column_nos[cn]] <- newtrialcols[cn]
+    df[,column_nos[cn]] <- as.numeric(df[,column_nos[cn]])
   }
   
   # and return the full data frame:

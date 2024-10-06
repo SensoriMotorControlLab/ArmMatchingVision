@@ -108,12 +108,12 @@ getLinesToSkip <- function(filename) {
 
 fillInNumericColumns <- function(df, column_nos) {
   
-  # things should start right away...
-  # but just in case we set it to NA (NOT APPLICABLE or something... an unknown value)
-  current_values <- rep(NA, length(column_nos))
-  
-  # we take just the relevant columns to work with:
-  trialcols <- df[,column_nos]
+  # # things should start right away...
+  # # but just in case we set it to NA (NOT APPLICABLE or something... an unknown value)
+  # current_values <- rep(NA, length(column_nos))
+  # 
+  # # we take just the relevant columns to work with:
+  # trialcols <- df[,column_nos]
   
   # # we create a new data frame to store continuous numeric values:
   # newtrialcols <- data.frame(  matrix(NA, nrow=dim(df)[1], ncol=length(column_nos) ) )
@@ -142,10 +142,12 @@ fillInNumericColumns <- function(df, column_nos) {
   #   df[,column_nos[cn]] <- newtrialcols[cn]
   # }
   
-  # trying out something else:
+  # trying out something much simpler:
   for (cn in c(1:length(column_nos))) {
     df[,column_nos[cn]] <- as.numeric(df[,column_nos[cn]])
   }
+  # (doesn't seem to be slower, so keeping this)
+  
   
   # and return the full data frame:
   return(df)

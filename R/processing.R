@@ -137,7 +137,7 @@ getMatchingDescriptor  <- function(descriptor='precision', grid.variables=c('dom
     outdata[combno,'group'] <- subdf$group[1]
     # get descriptors for the data on this combination:
     if (descriptor == 'precision') {
-      outdata[combno,descriptor] <- get95matchingConfidence(subdf)
+      outdata[combno,descriptor] <- get95CIellipse(subdf, vars=c('devX_cm','devY_cm'))
     }
     if (descriptor == 'accuracy') {
       outdata[combno,descriptor] <- mean(sqrt((subdf$devX_cm^2)+(subdf$devY_cm^2)))
@@ -150,14 +150,12 @@ getMatchingDescriptor  <- function(descriptor='precision', grid.variables=c('dom
 }
 
 
-get95matchingConfidence <- function(df) {
+get95CIellipse <- function(df, vars=NULL) {
   
-  pc <- princomp( x = df[,c('devX_cm','devY_cm')] )
-  CIsurf <- 1.96 * prod(pc$sdev) * pi
+  if (!is.null(vars)) {
+    df <- df[, vars]
+  }
   
-  # major <- CIs[which.max(CIs)]
-  # minor <- CIs[which.min(CIs)]
-  
-  return(CIsurf)
+  return(qnorm(0.975) * prod(princomp( df )$sdev) * pi)
 
 }

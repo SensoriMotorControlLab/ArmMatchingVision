@@ -1,15 +1,18 @@
 
 # pre-processing data -----
 
-getParticipantData <- function(ID, group) {
+getParticipantData <- function(ID, 
+                               group, 
+                               matched_hands=c('left','right'),
+                               matching_hands=c('seen','unseen')) {
   
   participant_data <- NA
   
   path <- sprintf('data/%s/%s/', group, ID)
   
-  for (matched_hand in c('left','right')) {
+  for (matched_hand in matched_hands) {
     
-    for (matching_hand in c('seen', 'unseen')) {
+    for (matching_hand in matching_hands) {
       
       for (block in c(1,2,3)) {
         
@@ -72,10 +75,45 @@ getParticipantData <- function(ID, group) {
 }
 
 
+getParticipants <- function() {
+  
+  left  <- basename(list.dirs(path='data/left/'))
+  left  <- left[which(left != 'left')]
+  right <- basename(list.dirs(path='data/right/'))
+  right <- right[which(right != 'right')]
+  
+  demographics <- read.csv('data/demographics.csv', stringsAsFactors = F)
+  left  <- left[ which(left  %in% demographics$ID[which(demographics$handedness_score < 0)])]
+  right <- right[which(right %in% demographics$ID[which(demographics$handedness_score > 0)])]
+  
+  df <- rbind( data.frame('ID'=left,
+                          'group'=rep('left',length(left))),
+               data.frame('ID'=right,
+                          'group'=rep('right',length(right)))
+               )
+  
+  
+  
+  # demo <- read.csv('data/demographics.csv', stringsAsFactors = F)
+  # demo <- demo[which(demo$handedness_score != 0),]
+  # demo$handedness_group <- NA
+  # demo$handedness_group[which(demo$handedness_score > 0)] <- 'right'
+  # demo$handedness_group[which(demo$handedness_score < 0)] <- 'left'
+  # 
+  
+  return(df)
+               
+}
+
 getAllData <- function(outfile=NULL) {
   
-  IDs     <- c('0bd1d0', '4ab788', '6d91a6', 'a93fee', 'bbcf73', '92ad8e', '437f47', '840d07', 'ac4a66', 'c03555')
-  groups  <- c('left',   'left',   'left',   'left',   'left',   'right',  'right',  'right',  'right',  'right' )
+  # this is now hard-coded... but will come from the demographics file later on:
+  # IDs     <- c('0bd1d0', '4ab788', '6d91a6', 'a93fee', 'bbcf73', '92ad8e', '437f47', '840d07', 'ac4a66', 'c03555')
+  # groups  <- c('left',   'left',   'left',   'left',   'left',   'right',  'right',  'right',  'right',  'right' )
+  
+  df <- getParticipants()
+  IDs <- df$ID
+  groups <- df$group
   
   allData <- NA
   
@@ -158,4 +196,31 @@ get95CIellipse <- function(df, vars=NULL) {
   
   return(qnorm(0.975) * prod(princomp( df )$sdev) * pi)
 
+}
+
+saveFullDataFrame <- function(indvars=c('dominant', 'matching_hand_seen')) {
+  
+  
+  pr_df <- getMatchingDescriptor(grid.variables = indvars, descriptor = 'precision')
+  ac_df <- getMatchingDescriptor(grid.variables = indvars, descriptor = 'accuracy')
+  
+  df <- merge( x = pr_df,
+               y = ac_df,
+               by = c('group', 'participant', indvars))
+  
+  demo <- read.csv('data/demographics.csv', stringsAsFactors = F)
+  demo <- demo[which(demo$handedness_score != 0),]
+  demo$handedness_group <- NA
+  demo$handedness_group[which(demo$handedness_score > 0)] <- 'right'
+  demo$handedness_group[which(demo$handedness_score < 0)] <- 'left'
+  
+  for (ID in df$participant) {
+    df$group[which(df$participant == ID)] <- demo$handedness_group[demo$ID == ID]
+  }
+  
+  write.csv( x         = df,
+             file      = 'data/AOVdata.csv',
+             row.names = F,
+             quote     = F )
+  
 }

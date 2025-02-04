@@ -274,3 +274,19 @@ convertData <- function(folders) {
   convertAllParticipantsData(folders, participants)
   
 }
+
+
+# demographics - handedness -----
+
+addHandedness <- function() {
+  
+  df <- read.csv('data/demographics.csv', stringsAsFactors = F)
+  
+  df$handedness_score <- 0
+  
+  for (column in c('writing','drawing','throwing','scissors','toothbrush','knife','spoon','broom','match','box')) {
+    df$handedness_score <- df$handedness_score + c('left'=-10, 'right'=10)[df[,column]]
+  }
+  
+  write.csv(df, 'data/demographics.csv', quote=F, row.names=F)  
+}
